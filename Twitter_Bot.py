@@ -21,6 +21,21 @@ class MentionListener(tweepy.StreamListener):
         tweet_id = result.group()[5:]
         print(tweet_id)
 
+        # Finds the tweet text among the data
+        text_beg = re.search('"text":', data).start() + 8
+        text_end = re.search('"source":', data).start() - 2
+        tweet_text = data[text_beg:text_end].lower()
+
+        # Dict containing the tag and double spaces that need to be replaced
+        str_to_replace = {'@hackorproject': '',
+                          '  ': ' '}
+
+        for key, value in str_to_replace.items():
+            # Replace key character with value character in string
+            tweet_text = tweet_text.replace(key, value)
+
+        print(tweet_text)
+
     # Return false to disconnect the stream - something went wrong
     def on_error(self, status_code):
         if status_code == 420:
@@ -34,7 +49,7 @@ class MentionStream:
 
     def start(self):
         # Detects when someone replies to it with @HackorProject
-        self.stream.filter(track=['HackorProject'])
+        self.stream.filter(track=['@hackORproject'])
 
 
 # A list of language codes according to ISO 639-1 codes - use for random translations
@@ -60,7 +75,7 @@ def get_language_code(user_input):
         return origin_lang_code[1:3]
 
 
-def translate():
+def translate(user_input):
     """
     :return: Original tweet (in its origin language) after being translated into 10 different random languages
     """
@@ -77,7 +92,7 @@ def translate():
             translator = Translator(to_lang=f'{i}')
             translated.append(translator.translate(translated[-1]))
 
-    final_translate = Translator(to_lang=get_language_code())
+    final_translate = Translator(to_lang=get_language_code(user_input))
     return final_translate.translate(translated[-1])
 
 
