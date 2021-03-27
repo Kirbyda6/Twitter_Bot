@@ -11,7 +11,7 @@ class MentionListener(tweepy.StreamListener):
 
     # These two funcs print out data that passes our filter (see MentionStream) to the terminal
     def on_data(self, data):
-        self.process_data()
+        self.process_data(data)
         return True
 
     def process_data(self, data):
