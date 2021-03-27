@@ -4,6 +4,7 @@ import secrets
 from PyDictionary import PyDictionary
 from langdetect import detect_langs
 import random
+import re
 
 
 # This is the listener that accesses the flow of data from twitter
@@ -16,6 +17,9 @@ class MentionListener(tweepy.StreamListener):
 
     def process_data(self, data):
         print(data)
+        result = re.search('"id":\d+', data)
+        tweet_id = result.group()[5:]
+        print(tweet_id)
 
     # Return false to disconnect the stream - something went wrong
     def on_error(self, status_code):
@@ -69,6 +73,3 @@ if __name__ == '__main__':
     listener = MentionListener()
     stream = MentionStream(auth, listener)
     stream.start()
-
-
-
