@@ -60,7 +60,7 @@ def get_language_code(user_input):
         return origin_lang_code[1:3]
 
 
-def translate():
+def translate(user_input):
     """
     :return: Original tweet (in its origin language) after being translated into 10 different random languages
     """
@@ -77,7 +77,7 @@ def translate():
             translator = Translator(to_lang=f'{i}')
             translated.append(translator.translate(translated[-1]))
 
-    final_translate = Translator(to_lang=get_language_code())
+    final_translate = Translator(to_lang=get_language_code(user_input))
     return final_translate.translate(translated[-1])
 
 
@@ -98,14 +98,13 @@ if __name__ == '__main__':
     num_mentions = len(mentions)
 
     # Iterate through mentions, starting with most recent
-    # TODO: apply the translate function
     for mention in mentions:
+        # TODO: only check for new mentions
         tweet_id = str(mention.id)
         text = mention.text
-        # Get language code
-        get_language_code(text)
-
-    print(len(mentions))
+        # Translate
+        print(translate(text))
+        # TODO: reply tweet before moving onto next mention
 
 
     listener = MentionListener()
