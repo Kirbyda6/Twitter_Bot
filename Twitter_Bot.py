@@ -15,8 +15,6 @@ try:
 except:
     print("Error during authentication")
 
-
-
 dictionary = PyDictionary()
 
 user_input = input()  # This will be data passed from the twitter users
@@ -37,14 +35,13 @@ def get_language_code():
     it returns the 2 char code.
     :return: a two character string origin language code: ex: en = english
     """
-    origin_lang_code_list = detect_langs(user_input)
-    origin_lang_code_str = str(origin_lang_code_list)
-    if origin_lang_code_str[1] == 'z':
-        print(origin_lang_code_str[1:6])
-        return origin_lang_code_str[1:6]
+    origin_lang_code = str(detect_langs(user_input))
+    if origin_lang_code[1] == 'z':
+        print(origin_lang_code[1:6])
+        return origin_lang_code[1:6]
     else:
-        print(origin_lang_code_str[1:3])
-        return origin_lang_code_str[1:3]
+        print(origin_lang_code[1:3])
+        return origin_lang_code[1:3]
 
 
 if __name__ == '__main__':
