@@ -1,30 +1,41 @@
 import tweepy
 import langdetect
 import secrets
-from PyDictionary import PyDictionary
+from translate import Translator
 from langdetect import detect_langs
 import random
+import re
 
-dictionary = PyDictionary()  # Dictionary object needed for translation
 
-# Authenticate to Twitter
-auth = tweepy.OAuthHandler(secrets.CONSUMER_KEY, secrets.CONSUMER_SECRET)
-auth.set_access_token(secrets.ACCESS_KEY, secrets.ACCESS_SECRET)
-api = tweepy.API(auth)
+# This is the listener that accesses the flow of data from twitter
+class MentionListener(tweepy.StreamListener):
 
-# Get mentions from twitter
-mentions = api.mentions_timeline()
+    # These two funcs print out data that passes our filter (see MentionStream) to the terminal
+    def on_data(self, data):
+        self.process_data(data)
+        return True
 
-# Print each tweet ID and text for each mention
-for mention in mentions:
-    print(str(mention.id) + ' - ' + mention.text)
+    def process_data(self, data):
+        print(data)
+        result = re.search('"id":\d+', data)
+        tweet_id = result.group()[5:]
+        print(tweet_id)
 
-# API Verification
-if api.verify_credentials() is False:
-    print("Error during authentication")
+    # Return false to disconnect the stream - something went wrong
+    def on_error(self, status_code):
+        if status_code == 420:
+            return False
 
-user_input = input()  # Temporary :: this will be data passed from the twitter users -> once changed need to refactor
-                      # get_language_code function
+
+# This is our stream that filters out mentions, AKA only pays attention to the data we want
+class MentionStream:
+    def __init__(self, auth, listener):
+        self.stream = tweepy.Stream(auth=auth, listener=listener)
+
+    def start(self):
+        # Detects when someone replies to it with @HackorProject
+        self.stream.filter(track=['HackorProject'])
+
 
 # A list of language codes according to ISO 639-1 codes - use for random translations
 lang_codes = ['af', 'ar', 'bg', 'bn', 'ca', 'cs', 'cy', 'da', 'de', 'el', 'en', 'es', 'et', 'fa', 'fi', 'fr', 'gu',
@@ -33,7 +44,7 @@ lang_codes = ['af', 'ar', 'bg', 'bn', 'ca', 'cs', 'cy', 'da', 'de', 'el', 'en', 
               'ur', 'vi', 'zh-cn', 'zh-tw']
 
 
-def get_language_code():
+def get_language_code(user_input):
     """
     Taking the input, extract and return the detected origin language code. The function checks if the
     input is one of the special case codes starting in z and if so returns the 5 char code. Otherwise,
@@ -42,10 +53,61 @@ def get_language_code():
     """
     origin_lang_code = str(detect_langs(user_input))
     if origin_lang_code[1] == 'z':
+        print(origin_lang_code[1:6])
         return origin_lang_code[1:6]
     else:
+        print(origin_lang_code[1:3])
         return origin_lang_code[1:3]
 
 
+def translate():
+    """
+    :return: Original tweet (in its origin language) after being translated into 10 different random languages
+    """
+    lang_to_translate_to = random.sample(lang_codes, random.randint(0, 10))
+    translated = []
+    counter = 0
+
+    for i in lang_to_translate_to:
+        counter += 1
+        if len(translated) == 0:
+            translator = Translator(to_lang=f'{i}')
+            translated.append(translator.translate(user_input))
+        elif len(translated) < 10:
+            translator = Translator(to_lang=f'{i}')
+            translated.append(translator.translate(translated[-1]))
+
+    final_translate = Translator(to_lang=get_language_code())
+    return final_translate.translate(translated[-1])
+
+
 if __name__ == '__main__':
-    get_language_code()
+    # Authenticate to Twitter
+    auth = tweepy.OAuthHandler(secrets.CONSUMER_KEY, secrets.CONSUMER_SECRET)
+    auth.set_access_token(secrets.ACCESS_KEY, secrets.ACCESS_SECRET)
+    api = tweepy.API(auth)
+
+    # API Verification
+    if api.verify_credentials() is False:
+        print("Error during authentication")
+
+    # Get and store mentions
+    mentions = api.mentions_timeline()
+
+    # Get and store number of mentions
+    num_mentions = len(mentions)
+
+    # Iterate through mentions, starting with most recent
+    # TODO: apply the translate function
+    for mention in mentions:
+        tweet_id = str(mention.id)
+        text = mention.text
+        # Get language code
+        get_language_code(text)
+
+    print(len(mentions))
+
+
+    listener = MentionListener()
+    stream = MentionStream(auth, listener)
+    stream.start()
