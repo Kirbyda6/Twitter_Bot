@@ -40,10 +40,8 @@ def get_language_code():
     origin_lang_code_list = detect_langs(user_input)
     origin_lang_code_str = str(origin_lang_code_list)
     if origin_lang_code_str[1] == 'z':
-        print(origin_lang_code_str[1:6])
         return origin_lang_code_str[1:6]
     else:
-        print(origin_lang_code_str[1:3])
         return origin_lang_code_str[1:3]
 
 
