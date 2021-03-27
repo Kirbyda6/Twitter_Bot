@@ -91,19 +91,27 @@ if __name__ == '__main__':
     if api.verify_credentials() is False:
         print("Error during authentication")
 
-    # Get and store mentions
+    # Get and store 20 most recent mentions, including retweets
     mentions = api.mentions_timeline()
 
-    # Get and store number of mentions
-    num_mentions = len(mentions)
+    # List to store already responded to mentions
+    seen_mentions = []
 
     # Iterate through mentions, starting with most recent
     for mention in mentions:
-        # TODO: only check for new mentions
         tweet_id = str(mention.id)
-        text = mention.text
+        tweet_text = mention.text
+
+        # Terminate if no more new mentions (since they are chronological)
+        if tweet_id in seen_mentions:
+            break
+
+        # Mark mention as "seen"
+        seen_mentions.append(tweet_id)
+
         # Translate
-        print(translate(text))
+        print(translate(tweet_text))
+
         # TODO: reply tweet before moving onto next mention
 
 
