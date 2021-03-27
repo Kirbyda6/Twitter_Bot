@@ -12,8 +12,10 @@ auth = tweepy.OAuthHandler(secrets.CONSUMER_KEY, secrets.CONSUMER_SECRET)
 auth.set_access_token(secrets.ACCESS_KEY, secrets.ACCESS_SECRET)
 api = tweepy.API(auth)
 
+# Get mentions from twitter
 mentions = api.mentions_timeline()
 
+# Print each tweet ID and text for each mention
 for mention in mentions:
     print(str(mention.id) + ' - ' + mention.text)
 
