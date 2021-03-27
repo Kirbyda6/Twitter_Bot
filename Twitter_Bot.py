@@ -1,18 +1,18 @@
 import tweepy
+import langdetect
+import secrets
 from PyDictionary import PyDictionary
 from langdetect import detect_langs
 import random
 
+
 # Authenticate to Twitter
-auth = tweepy.OAuthHandler()
-auth.set_access_token()
+auth = tweepy.OAuthHandler(secrets.CONSUMER_KEY, secrets.CONSUMER_SECRET)
+auth.set_access_token(secrets.ACCESS_KEY, secrets.ACCESS_SECRET)
 
 api = tweepy.API(auth)
 
-try:
-    api.verify_credentials()
-    print("Authentication OK")
-except:
+if api.verify_credentials() is False:
     print("Error during authentication")
 
 dictionary = PyDictionary()
@@ -37,10 +37,8 @@ def get_language_code():
     """
     origin_lang_code = str(detect_langs(user_input))
     if origin_lang_code[1] == 'z':
-        print(origin_lang_code[1:6])
         return origin_lang_code[1:6]
     else:
-        print(origin_lang_code[1:3])
         return origin_lang_code[1:3]
 
 
