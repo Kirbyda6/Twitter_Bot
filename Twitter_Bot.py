@@ -36,6 +36,12 @@ class MentionListener(tweepy.StreamListener):
 
         print(tweet_text)
 
+        # Sends a reply to the user
+        user_beg = re.search('"screen_name":"', data).end()
+        user_end = re.search('"location"', data).start() - 2
+        user = data[user_beg:user_end]
+        api.update_status('@' + user + ' Hello', tweet_id)
+
     # Return false to disconnect the stream - something went wrong
     def on_error(self, status_code):
         if status_code == 420:
