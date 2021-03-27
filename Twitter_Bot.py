@@ -21,6 +21,21 @@ class MentionListener(tweepy.StreamListener):
         tweet_id = result.group()[5:]
         print(tweet_id)
 
+        # Finds the tweet text among the data
+        text_beg = re.search('"text":', data).start() + 8
+        text_end = re.search('"source":', data).start() - 2
+        tweet_text = data[text_beg:text_end].lower()
+
+        # Dict containing the tag and double spaces that need to be replaced
+        str_to_replace = {'@hackorproject': '',
+                          '  ': ' '}
+
+        for key, value in str_to_replace.items():
+            # Replace key character with value character in string
+            tweet_text = tweet_text.replace(key, value)
+
+        print(tweet_text)
+
     # Return false to disconnect the stream - something went wrong
     def on_error(self, status_code):
         if status_code == 420:
@@ -34,7 +49,7 @@ class MentionStream:
 
     def start(self):
         # Detects when someone replies to it with @HackorProject
-        self.stream.filter(track=['HackorProject'])
+        self.stream.filter(track=['@hackORproject'])
 
 
 # A list of language codes according to ISO 639-1 codes - use for random translations
@@ -90,30 +105,6 @@ if __name__ == '__main__':
     # API Verification
     if api.verify_credentials() is False:
         print("Error during authentication")
-
-    # Get and store 20 most recent mentions, including retweets
-    mentions = api.mentions_timeline()
-
-    # List to store already responded to mentions
-    seen_mentions = []
-
-    # Iterate through mentions, starting with most recent
-    for mention in mentions:
-        tweet_id = str(mention.id)
-        tweet_text = mention.text
-
-        # Terminate if no more new mentions (since they are chronological)
-        if tweet_id in seen_mentions:
-            break
-
-        # Mark mention as "seen"
-        seen_mentions.append(tweet_id)
-
-        # Translate
-        print(translate(tweet_text))
-
-        # TODO: reply tweet before moving onto next mention
-
 
     listener = MentionListener()
     stream = MentionStream(auth, listener)
