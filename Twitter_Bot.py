@@ -1,10 +1,8 @@
 import tweepy
-import langdetect
 import secrets
-from translate import Translator
-from langdetect import detect_langs
 import random
 import re
+from deep_translator import (GoogleTranslator, single_detection)
 
 
 # This is the listener that accesses the flow of data from twitter
@@ -37,11 +35,17 @@ class MentionListener(tweepy.StreamListener):
 
         print(tweet_text)
 
+        # This block runs the translate method 10 times and mutates rep with the final translation
+        rep = []
+        starter_lang = single_detection(f'{tweet_text}', api_key=f'{secrets.DTL}')
+        num = 10
+        translate(tweet_text, starter_lang, num, rep)
+
         # Sends a reply to the user
         user_beg = re.search('"screen_name":"', data).end()
         user_end = re.search('"location"', data).start() - 2
         user = data[user_beg:user_end]
-        api.update_status('@' + user + ' Hello', tweet_id)
+        api.update_status('@' + user + ' ' + rep[0], tweet_id)
 
     # Return false to disconnect the stream - something went wrong
     def on_error(self, status_code):
@@ -60,47 +64,21 @@ class MentionStream:
 
 
 # A list of language codes according to ISO 639-1 codes - use for random translations
-lang_codes = ['af', 'ar', 'bg', 'bn', 'ca', 'cs', 'cy', 'da', 'de', 'el', 'en', 'es', 'et', 'fa', 'fi', 'fr', 'gu',
-              'he', 'hi', 'hr', 'hu', 'id', 'it', 'ja', 'kn', 'ko', 'lt', 'lv', 'mk', 'ml', 'mr', 'ne', 'nl', 'no',
-              'pa', 'pl', 'pt', 'ro', 'ru', 'sk', 'sl', 'so', 'sq', 'sv', 'sw', 'ta', 'te', 'th', 'tl', 'tr', 'uk',
-              'ur', 'vi', 'zh-cn', 'zh-tw']
+lang_dict = GoogleTranslator.get_supported_languages(as_dict=True)
+lang_codes = list(lang_dict.values())
 
 
-def get_language_code(user_input):
-    """
-    Taking the input, extract and return the detected origin language code. The function checks if the
-    input is one of the special case codes starting in z and if so returns the 5 char code. Otherwise,
-    it returns the 2 char code.
-    :return: a two character string origin language code: ex: en = english
-    """
-    origin_lang_code = str(detect_langs(user_input))
-    if origin_lang_code[1] == 'z':
-        print(origin_lang_code[1:6])
-        return origin_lang_code[1:6]
-    else:
-        print(origin_lang_code[1:3])
-        return origin_lang_code[1:3]
-
-
-def translate(user_input):
+def translate(user_input, starter_lang, num, reply):
     """
     :return: Original tweet (in its origin language) after being translated into 10 different random languages
     """
-    lang_to_translate_to = random.sample(lang_codes, random.randint(0, 10))
-    translated = []
-    counter = 0
-
-    for i in lang_to_translate_to:
-        counter += 1
-        if len(translated) == 0:
-            translator = Translator(to_lang=f'{i}')
-            translated.append(translator.translate(user_input))
-        elif len(translated) < 10:
-            translator = Translator(to_lang=f'{i}')
-            translated.append(translator.translate(translated[-1]))
-
-    final_translate = Translator(to_lang=get_language_code(user_input))
-    return final_translate.translate(translated[-1])
+    if num != 0:
+        translated = GoogleTranslator(source='auto', target=lang_codes[random.randint(0, len(lang_codes) - 1)]).translate(user_input)
+        num -= 1
+        translate(translated, starter_lang, num, reply)
+    else:
+        translated = GoogleTranslator(source='auto', target=starter_lang).translate(user_input)
+        reply.append(translated)
 
 
 if __name__ == '__main__':
