@@ -1,7 +1,7 @@
 # Babel Bot
 https://twitter.com/hackORproject
 
-![image](https://user-images.githubusercontent.com/54118319/112742466-d1874b00-8f5c-11eb-9eb4-e90bbcdde0b5.png)
+![Capture](https://user-images.githubusercontent.com/54118319/112742794-8d497a00-8f5f-11eb-88f7-04858e5e0523.PNG)
 
 ## Inspiration
 The inspiration to build Babel Bot comes from one of Babel Bot's creators who had heard of a similar concept in which poems were passed into a translation platform repeatedly with different languages each iteration. Then, at the end, reading how those various iterations of languages modified the original poem sparked an interesting idea that we could be applied more broadly.
