@@ -2,7 +2,8 @@ import tweepy
 import secrets
 import random
 import re
-from deep_translator import (GoogleTranslator, single_detection)
+from deep_translator import GoogleTranslator, single_detection
+
 
 
 # This is the listener that accesses the flow of data from twitter
@@ -45,7 +46,8 @@ class MentionListener(tweepy.StreamListener):
         user_beg = re.search('"screen_name":"', data).end()
         user_end = re.search('"location"', data).start() - 2
         user = data[user_beg:user_end]
-        api.update_status('@' + user + ' ' + rep[0], tweet_id)
+        api.update_status('@' + user + ' ' + translate(tweet_text), tweet_id)
+
 
     # Return false to disconnect the stream - something went wrong
     def on_error(self, status_code):
@@ -68,17 +70,13 @@ lang_dict = GoogleTranslator.get_supported_languages(as_dict=True)
 lang_codes = list(lang_dict.values())
 
 
-def translate(user_input, starter_lang, num, reply):
-    """
-    :return: Original tweet (in its origin language) after being translated into 10 different random languages
-    """
-    if num != 0:
-        translated = GoogleTranslator(source='auto', target=lang_codes[random.randint(0, len(lang_codes) - 1)]).translate(user_input)
-        num -= 1
-        translate(translated, starter_lang, num, reply)
-    else:
-        translated = GoogleTranslator(source='auto', target=starter_lang).translate(user_input)
-        reply.append(translated)
+def translate(text):
+    origin_lang = single_detection(text, api_key=secrets.DTL)
+    languages = random.sample(lang_codes, 10)
+    for lang in languages:
+        text = GoogleTranslator(source='auto', target=lang).translate(text)
+    return GoogleTranslator(source='auto', target=origin_lang).translate(text)
+
 
 
 if __name__ == '__main__':
