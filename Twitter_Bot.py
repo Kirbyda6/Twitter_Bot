@@ -11,33 +11,8 @@ class MentionListener(tweepy.StreamListener):
     # These two funcs print out data that passes our filter (see MentionStream) to the terminal
     def on_data(self, data):
         """Passes data from statuses to the process_data method """
-        self.process_data(data)
-        return True
-
-    def process_data(self, data):
-        """
-        Stores the tweet ID and the tweet text from the data passed to it. Removes '@hackorproject', any new line
-        characters, and consequent double spaces. Uses the translate function to write and send a reply tweet to the
-        origin tweet.
-        """
-        result = re.search('"id":\d+', data)
-        tweet_id = result.group()[5:]
-
-        # Finds the tweet text among the data
-        text_beg = re.search('"text":', data).start() + 8
-        text_end = re.search('"source":', data).start() - 2
-        tweet_text = data[text_beg:text_end].lower()
-
-        # Dict containing the tag, newline, and double spaces that need to be replaced
-        str_to_replace = {'@hackorproject': '',
-                          r'\n': ' ',
-                          '  ': ' '}
-
-        for key, value in str_to_replace.items():
-            # Replace key character with value character in string
-            tweet_text = tweet_text.replace(key, value)
-
-        print("Tweet received. Running through translator...")
+        tweet_id = self.get_tweet_id(data)
+        tweet_text = self.get_tweet_text(data)
 
         # Sends a reply to the user
         user_beg = re.search('"screen_name":"', data).end()
@@ -45,6 +20,29 @@ class MentionListener(tweepy.StreamListener):
         user = data[user_beg:user_end]
         api.update_status('@' + user + ' ' + translate(tweet_text), tweet_id)
         print("Reply tweet sent.")
+        return True
+
+    def get_tweet_id(self, data):
+        """Returns the tweet ID as a string"""
+        result = re.search('"id":\d+', data)
+        return result.group()[5:]
+
+    def get_tweet_text(self, data):
+        """Returns the text content of the tweet as a string"""
+        text_beg = re.search('"text":', data).start() + 8
+        text_end = re.search('"source":', data).start() - 2
+        tweet_text = data[text_beg:text_end].lower()
+
+        # Dict containing the tag, newline, and double spaces that need to be replaced
+        str_to_replace = {'@hackorproject': '', r'\n': ' ', '  ': ' '}
+
+        for key, value in str_to_replace.items():
+            # Replace key character with value character in string
+            tweet_text = tweet_text.replace(key, value)
+
+        print("Tweet received. Running through translator...")
+
+        return tweet_text
 
     def on_error(self, status_code):
         """if error code is received, returns false to disconnect the stream - something went wrong"""
