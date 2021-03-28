@@ -6,11 +6,10 @@ from deep_translator import GoogleTranslator, single_detection
 
 
 class MentionListener(tweepy.StreamListener):
-    """Represents the listener that access the flow of data from twitter"""
+    """Represents the listener that accesses the flow of data from twitter"""
 
-    # These two funcs print out data that passes our filter (see MentionStream) to the terminal
     def on_data(self, data):
-        """Passes data from statuses to the process_data method """
+        """Receives mentions, storing the tweet ID, text, and username in order to write and send a reply to the user."""
         tweet_id = self.get_tweet_id(data)
         tweet_text = self.get_tweet_text(data)
 
@@ -18,6 +17,7 @@ class MentionListener(tweepy.StreamListener):
         user_beg = re.search('"screen_name":"', data).end()
         user_end = re.search('"location"', data).start() - 2
         user = data[user_beg:user_end]
+        
         api.update_status('@' + user + ' ' + translate(tweet_text), tweet_id)
         print("Reply tweet sent.")
         return True
@@ -37,15 +37,15 @@ class MentionListener(tweepy.StreamListener):
         str_to_replace = {'@hackorproject': '', r'\n': ' ', '  ': ' '}
 
         for key, value in str_to_replace.items():
-            # Replace key character with value character in string
+            # Replace key string with value string in the text
             tweet_text = tweet_text.replace(key, value)
 
         print("Tweet received. Running through translator...")
-
+        
         return tweet_text
 
     def on_error(self, status_code):
-        """if error code is received, returns false to disconnect the stream - something went wrong"""
+        """If an error code is received, returns false to disconnect the stream."""
         if status_code == 420:
             print("Error code: 420 - something went wrong. Disconnecting from stream.")
             return False
@@ -53,6 +53,7 @@ class MentionListener(tweepy.StreamListener):
 
 class MentionStream:
     """Filters out mentions, i.e. only pays attention to the data we want"""
+    
     def __init__(self, auth, listener):
         """creates a MentionStream object using auth code and the MentionListener object"""
         self.stream = tweepy.Stream(auth=auth, listener=listener)
@@ -68,11 +69,12 @@ lang_codes = list(lang_dict.values())
 
 def translate(text):
     """
-    Takes a string of text as a parameter and returns that text, translated through 10 different languages and finally
-    back to the original detected language.
+    Takes a string of text as a parameter and translates it through 10 random languages and back to the original 
+    detected language, returning the final translation.
     """
     origin_lang = single_detection(text, api_key=secrets.DTL)
     languages = random.sample(lang_codes, 10)
+    
     for lang in languages:
         text = GoogleTranslator(source='auto', target=lang).translate(text)
     return GoogleTranslator(source='auto', target=origin_lang).translate(text)
