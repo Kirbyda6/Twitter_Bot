@@ -5,6 +5,7 @@ import re
 from deep_translator import GoogleTranslator, single_detection
 
 
+
 # This is the listener that accesses the flow of data from twitter
 class MentionListener(tweepy.StreamListener):
 
@@ -35,11 +36,18 @@ class MentionListener(tweepy.StreamListener):
 
         print(tweet_text)
 
+        # This block runs the translate method 10 times and mutates rep with the final translation
+        rep = []
+        starter_lang = single_detection(f'{tweet_text}', api_key=f'{secrets.DTL}')
+        num = 10
+        translate(tweet_text, starter_lang, num, rep)
+
         # Sends a reply to the user
         user_beg = re.search('"screen_name":"', data).end()
         user_end = re.search('"location"', data).start() - 2
         user = data[user_beg:user_end]
         api.update_status('@' + user + ' ' + translate(tweet_text), tweet_id)
+
 
     # Return false to disconnect the stream - something went wrong
     def on_error(self, status_code):
@@ -61,12 +69,14 @@ class MentionStream:
 lang_dict = GoogleTranslator.get_supported_languages(as_dict=True)
 lang_codes = list(lang_dict.values())
 
+
 def translate(text):
     origin_lang = single_detection(text, api_key=secrets.DTL)
     languages = random.sample(lang_codes, 10)
     for lang in languages:
         text = GoogleTranslator(source='auto', target=lang).translate(text)
     return GoogleTranslator(source='auto', target=origin_lang).translate(text)
+
 
 
 if __name__ == '__main__':
