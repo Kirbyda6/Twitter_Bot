@@ -1,4 +1,5 @@
-# Twitter_Bot
+# Babel Bot
+https://twitter.com/hackORproject
 
 ![image](https://user-images.githubusercontent.com/54118319/112742466-d1874b00-8f5c-11eb-9eb4-e90bbcdde0b5.png)
 
