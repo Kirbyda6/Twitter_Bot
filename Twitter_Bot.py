@@ -5,20 +5,23 @@ import re
 from deep_translator import GoogleTranslator, single_detection
 
 
-
-# This is the listener that accesses the flow of data from twitter
 class MentionListener(tweepy.StreamListener):
+    """Represents the listener that access the flow of data from twitter"""
 
     # These two funcs print out data that passes our filter (see MentionStream) to the terminal
     def on_data(self, data):
+        """Passes data from statuses to the process_data method """
         self.process_data(data)
         return True
 
     def process_data(self, data):
-        print(data)
+        """
+        Stores the tweet ID and the tweet text from the data passed to it. Removes '@hackorproject', any new line
+        characters, and consequent double spaces. Uses the translate function to write and send a reply tweet to the
+        origin tweet.
+        """
         result = re.search('"id":\d+', data)
         tweet_id = result.group()[5:]
-        print(tweet_id)
 
         # Finds the tweet text among the data
         text_beg = re.search('"text":', data).start() + 8
@@ -34,34 +37,30 @@ class MentionListener(tweepy.StreamListener):
             # Replace key character with value character in string
             tweet_text = tweet_text.replace(key, value)
 
-        print(tweet_text)
-
-        # This block runs the translate method 10 times and mutates rep with the final translation
-        rep = []
-        starter_lang = single_detection(f'{tweet_text}', api_key=f'{secrets.DTL}')
-        num = 10
-        translate(tweet_text, starter_lang, num, rep)
+        print("Tweet received. Running through translator...")
 
         # Sends a reply to the user
         user_beg = re.search('"screen_name":"', data).end()
         user_end = re.search('"location"', data).start() - 2
         user = data[user_beg:user_end]
         api.update_status('@' + user + ' ' + translate(tweet_text), tweet_id)
+        print("Reply tweet sent.")
 
-
-    # Return false to disconnect the stream - something went wrong
     def on_error(self, status_code):
+        """if error code is received, returns false to disconnect the stream - something went wrong"""
         if status_code == 420:
+            print("Error code: 420 - something went wrong. Disconnecting from stream.")
             return False
 
 
-# This is our stream that filters out mentions, AKA only pays attention to the data we want
 class MentionStream:
+    """Filters out mentions, i.e. only pays attention to the data we want"""
     def __init__(self, auth, listener):
+        """creates a MentionStream object using auth code and the MentionListener object"""
         self.stream = tweepy.Stream(auth=auth, listener=listener)
 
     def start(self):
-        # Detects when someone replies to it with @HackorProject
+        """starts the stream and detects when someone mentions @hackORproject on twitter"""
         self.stream.filter(track=['@hackORproject'])
 
 
@@ -69,14 +68,16 @@ class MentionStream:
 lang_dict = GoogleTranslator.get_supported_languages(as_dict=True)
 lang_codes = list(lang_dict.values())
 
-
 def translate(text):
+    """
+    Takes a string of text as a parameter and returns that text, translated through 10 different languages and finally
+    back to the original detected language.
+    """
     origin_lang = single_detection(text, api_key=secrets.DTL)
     languages = random.sample(lang_codes, 10)
     for lang in languages:
         text = GoogleTranslator(source='auto', target=lang).translate(text)
     return GoogleTranslator(source='auto', target=origin_lang).translate(text)
-
 
 
 if __name__ == '__main__':
