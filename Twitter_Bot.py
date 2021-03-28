@@ -26,8 +26,9 @@ class MentionListener(tweepy.StreamListener):
         text_end = re.search('"source":', data).start() - 2
         tweet_text = data[text_beg:text_end].lower()
 
-        # Dict containing the tag and double spaces that need to be replaced
+        # Dict containing the tag, newline, and double spaces that need to be replaced
         str_to_replace = {'@hackorproject': '',
+                          r'\n': ' ',
                           '  ': ' '}
 
         for key, value in str_to_replace.items():
